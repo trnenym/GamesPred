@@ -1,8 +1,11 @@
 # GamesPred
 Predicting success of video games based on descriptive data
 
-Work in progress
+Work in progress.
 
+To my best knowledge, there is no universal tool for analysis of video games with the aim of providing an estimation of game's success. Previous studies focused on retail sales which are now irrelevant for indie studios relying on digital distribution via Steam. The goal of this project is to offer an intuitive way of finding how successful a game will be based on basic information (see below).
+
+Data so far:
 3,021 games released on Steam August 2012 - July 2015
 
 Average number of players in first two months as a measure of success (source: SteamCharts)
