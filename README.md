@@ -2,7 +2,7 @@
 Predicting success of video games based on descriptive data
 
 To my best knowledge, there is no universal tool for analysis of video games with the aim of providing an estimation of a game's success. Previous studies focused on retail sales which are now irrelevant for indie studios relying on digital distribution via Steam. The goal of this project is to offer an intuitive way of finding out how successful a game will be based on basic information (see below).
-------------------------------------------------------
+
 Data so far:
 3,021 games released on Steam August 2012 - July 2015
 
@@ -60,9 +60,9 @@ Attributes:
 48    DescriptionLength  
 49             UserTags  
 50              Players  
-------------------------------------------------------
+
 Results so far:
 correlation 0.75 using Random Forest (see "results")
-------------------------------------------------------
+
 Related study:
 Classification of game descriptions based on how informative they are - 74 % accuracy, see "desc.inf" for details
