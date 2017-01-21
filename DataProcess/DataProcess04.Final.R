@@ -172,7 +172,7 @@ process.final <- function(dataset.processed, type, mode, evaluation, min.devpub,
       score <- InfoGainAttributeEval(ClassHelper~., description.tdm)
       score <- data.frame(Terms = colnames(description.tdm.list$tdm), AttrImportance = score)
       terms.selected <- score[order(score$AttrImportance, decreasing = T),]$Terms[1:top.terms]
-      cache$terms.selected <- terms.selected
+      cache$terms.selected <- sort(as.character(terms.selected))
     } else {
       description.tdm <- description.tdm.list$tdm
       terms.selected <- cache$terms.selected

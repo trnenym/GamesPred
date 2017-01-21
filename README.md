@@ -17,21 +17,29 @@ Download the project from GitHub to a desired location
 ##Usage
 cd to the download location
 
-    cd <path_to_download>/GamesPred  
+    cd <path_to_download>/GamesPred-master
 
 ###Predictions
 
 If R is in your PATH variable, you can simply run
 
-    R -e "install.packages('shiny')"  
+    R -e "install.packages('shiny', repos='http://cran.rstudio.com/')"
 
 Otherwise (typically on Windows), you need to specify the R bin location. E.g.:
 
-    "C:\Program Files\R\R-3.3.2\bin\R.exe" -e "install.packages('shiny')"
+    "C:\Program Files\R\R-3.3.2\bin\R.exe" -e "install.packages('shiny', repos='http://cran.rstudio.com/')"
+
+Note: you will probably need to sudo all commands on unix-based systems.
+	
+There may be a problem with the "slam" package on unix-based systems, hence you may want to install it manually before proceeding:
+
+	sudo apt-get install r-cran-slam
 
 You can run the prediction app via
 
     R -e "shiny::runApp('./', launch.browser=TRUE)"
+
+Note: required packages will install during a first-time launch. This may take up to several minutes. If the app refuses to launch, simply try again as there may be a temporary problem with the CRAN repository.
 
 
 ###Download/Evaluation:
@@ -42,16 +50,15 @@ You can run the prediction app via
 
 However, I recommend using an IDE such as [RStudio](https://www.rstudio.com/products/rstudio/download/) for anything other than running the prediction app
 
-####Evaluate
+####"Evaluate" function description
 
-Download and process data  
-Create train-validation-test splits and perform evaluation
+Download and process data, create train-validation-test splits and perform evaluation
 
 Usage:  
 Evaluate(update = FALSE, split = c(0.60, 0.20, 0.20), mode = "reg", intervals = c(20), seed = 61, top.terms = 50)
 
 Arguments:  
-update - whether data should be updated/downloaded  
+update - whether data should be updated/downloaded  (the whole process may take up to 2 days if no data is present due to API's traffic limitations)
 split - how dataset should be split into train, validation, and test set  
 mode - "reg" for regression or "class" for classification  
 intervals - players are split into classes which are then used for classification and are also balanced  
