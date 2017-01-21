@@ -3,6 +3,10 @@
 DataDownload <- function() {
   cat("Downloading games:\n")
   
+  if(!file.exists("./DataDownload/DataRaw")) {
+    dir.create("./DataDownload/DataRaw")
+  }
+  
   #SteamSpy API has a list of all games, unlike Steam API that lists also DLCs
   #Movies, other software etc. are still included and have to removed later
   steam.ids.json <- fromJSON("http://steamspy.com/api.php?request=all")
