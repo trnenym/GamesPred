@@ -3,8 +3,6 @@
 source("./Init.R")
 Init()
 
-library(shiny)
-
 if(!file.exists("./DataProcess/Data/cache.RData")) {
   stop("You need to run evaluation first to train a model!")
 } else {

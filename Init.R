@@ -9,16 +9,16 @@ load.package <- function(package) {
 
 # evaluation: whether evaluating on validation/test data or predicting a single game
 Init <- function(evaluation = FALSE) {
-  
   source("./DataProcess/lib/DataProcess.lib.R")
   
-  packages.essential <- c("shiny", "ineq", "utils", "tm", "grDevices", "jpeg", "graphics", "missForest", "e1071")
+  packages.essential <- c("shiny", "ineq", "utils", "NLP", "tm", "grDevices", "jpeg", "graphics", "iterators", "itertools", "foreach"
+                          , "randomForest", "missForest", "e1071")
   
   lapply(packages.essential, load.package)
   
   if(evaluation) {
     packages.eval <- c("jsonlite", "curl", "bitops", "RCurl", "XML", "lubridate", "stats", "FSelector", "RWeka"
-                       , "caret", "neuralnet", "rpart", "tree", "Metrics")
+                       , "ggplot2", "caret", "neuralnet", "rpart", "tree", "Metrics")
     
     lapply(packages.eval, load.package)
   }
