@@ -5,7 +5,7 @@ Prediction.Reg <- function(dataset.new, new.game.data) {
   cat("Making prediction\n")
   set.seed(61)
   
-  logical.features.to.return <- c("SinglePlayer", "MultiPlayer", "Coop", "SteamAchievements", "SteamTradingCards")
+  # logical.features.to.return <- c("SinglePlayer", "MultiPlayer", "Coop", "SteamAchievements", "SteamTradingCards")
   
   results <- data.frame(actual = numeric(0), predicted = numeric(0))
   
@@ -75,18 +75,21 @@ Prediction.Reg <- function(dataset.new, new.game.data) {
       
       if(length(unique(pair[,x])) == 1 && !is.logical(pair[,x])) return(attr.to.string(names(pair[x])))
       if(length(unique(pair[,x])) == 1 && is.logical(pair[,x]) && pair[1,x]) return(attr.to.string(names(pair[x])))
-      if(length(unique(pair[,x])) == 1 && is.logical(pair[,x]) && !pair[1,x] && names(pair[x]) %in% logical.features.to.return)
-          return(attr.to.string(names(pair[x]), prefix = "No "))
+      # if(length(unique(pair[,x])) == 1 && is.logical(pair[,x]) && !pair[1,x] && names(pair[x]) %in% logical.features.to.return)
+      #     return(attr.to.string(names(pair[x]), prefix = "No "))
       return(NA)
       })
-    # colnames.same <- paste(colnames(pair)[columns.same], collapse = ", ")
+    
     dataset.test.predictions.ordered$CommonAttributes[i] <- paste0(na.omit(columns.same), collapse = ", ")
   }
   
   dataset.test.predictions.ordered <- dataset.test.predictions.ordered[,-which(colnames(dataset.test.predictions.ordered) == "ID")]
   
-  final.result <- list(message = paste0("Predicted average number of players: <b>", prediction.low, " - ", prediction.high, "</b> (confidence 80 %)"
-                                        , "<br/><br/> Games with similar predictions: <br/>", collapse = "")
+  colnames(dataset.test.predictions.ordered) <- c("Name", "Actual number of players", "Prediction", "Features that these games share with your game")
+  
+  final.result <- list(message = paste0("Predicted average number of concurrent players in the first 2 months after release: <b>"
+                                        , prediction.low, " - ", prediction.high, "</b> (confidence 80 %)"
+                                        , "<br/><br/> Games which got a similar prediction in the past: <br/>", collapse = "")
                        , similar = dataset.test.predictions.ordered)
   
   return(final.result)

@@ -1,2 +1,7 @@
 .RData
 .Rhistory
+DataDownload/DataRaw/
+.Rproj.user/
+stats.R
+DataDownload/current.download.ini
+DataDownload/current.screenshot.ini
