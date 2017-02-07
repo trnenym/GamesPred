@@ -111,4 +111,4 @@ Each game has its own folder with data and images. These are further processed i
 The best results were achieved using SVM on continuous class attribute:
 
 Correlation coefficient: 0.83  
-Normalized Root Mean Squared Error: 0.57 %
+Normalized Root Mean Squared Error: 57 %
