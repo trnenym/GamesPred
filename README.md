@@ -108,7 +108,7 @@ The following information was downloaded for each game on Steam (almost 10,000 g
 
 Each game has its own folder with data and images. These are further processed into a single data table with new and adjusted attributes (e.g. each game has a record about its developer's/publisher's previous games, and languages are separated into multiple attributes). Only applicable records (not free-to-play, not Early Access, no crucial value missing) are allowed for further processing (about 4,600 games). The dataset is then split into training, validation, and test set, and further processing is performed on these splits (such as transforming descriptions into a document-term matrix).
 
-Some statistics about the data can be found at: http://is.muni.cz/www/396121/GamesPred/statistics.pdf
+Some statistics about the data can be found at: https://is.muni.cz/www/trnenym/GamesPred/statistics.pdf
 
 The best results were achieved using SVM on continuous class attribute:
 
