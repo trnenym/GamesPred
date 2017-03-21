@@ -1,9 +1,9 @@
-#GamesPred
+# GamesPred
 
-##Overview
+## Overview
 GamesPred was developed to provide predictions of how a game released on Steam will be successful. This includes games not yet announced. The average number of concurrent players in 2 months after the release is used to measure a game's success. This has been calculated from steamcharts.com for roughly 4,600 games which are used to make predictions about new games. Free-to-play and Early Access titles were left out of the study and it is therefore recommended not to use this tool on them. In addition, only games from a developer/publisher with at least 2 games in the database can be reliably predicted. The application notifies you immediately if this condition is not satisfied.
 
-##Installation
+## Installation
 The project was tested on Windows 10 and Xubuntu 16.04.
 
 Requirements:
@@ -19,11 +19,11 @@ RStudio: https://www.rstudio.com/products/rstudio/download/
 
 Download the project from GitHub to a desired location  
 
-##Usage
+## Usage
 
-###Predictions
+### Predictions
 
-####Via RStudio
+#### Via RStudio
 Using RStudio makes the whole process a lot easier, without requiring root privileges / administrator rights.
 
 * Install [RStudio](https://www.rstudio.com/products/rstudio/download/) if you have not yet done so.
@@ -33,7 +33,7 @@ Using RStudio makes the whole process a lot easier, without requiring root privi
 * Click "Run App" at the top of the code panel. Click "Yes" when asked to install shiny.
 * RStudio will now install required packages. If the app refuses to launch, restart RStudio and try again as there may be a temporary problem with the CRAN repository.
 
-####Via Terminal
+#### Via Terminal
 cd to the download location
 
     cd <path_to_download>/GamesPred-master
@@ -58,14 +58,14 @@ You can run the prediction app via
 
 *Note: By default, R installs packages to "C:/Program Files/R/R-version/library" and will require administrator rights.
 
-###Download/Evaluation:
+### Download/Evaluation:
 
 Either run R in terminal or open RStudio with working directory set to the "GamesPred-master" project root folder
 
     source("./Evaluation.main.R")
     Evaluate()
 
-####"Evaluate" function description
+#### "Evaluate" function description
 
 Download and process data, create train-validation-test splits and perform evaluation
 
@@ -81,7 +81,7 @@ seed - random generator seed
 top.terms - how many top terms (based on information gain) from a description's document-term matrix should be selected
 
 
-##Details
+## Details
 
 The following information was downloaded for each game on Steam (almost 10,000 games as of September 1st, 2016):
 
