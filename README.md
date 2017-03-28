@@ -1,7 +1,7 @@
 # GamesPred
 
 ## Overview
-GamesPred was developed to provide predictions of how a game released on Steam will be successful. This includes games not yet announced. The average number of concurrent players in 2 months after the release is used to measure a game's success. This has been calculated from steamcharts.com for roughly 4,600 games which are used to make predictions about new games. Free-to-play and Early Access titles were left out of the study and it is therefore recommended not to use this tool on them. In addition, only games from a developer/publisher with at least 2 games in the database can be reliably predicted. The application notifies you immediately if this condition is not satisfied.
+GamesPred was developed to predict how a game released on Steam will be successful. This includes games not yet announced. The average number of concurrent players in 2 months after the release is used to measure a game's success. This has been calculated from steamcharts.com for roughly 4,600 games which are used to make predictions about new games. Free-to-play and Early Access titles were left out of the study and it is therefore recommended not to use this tool on them. In addition, only games from a developer/publisher with at least 2 games in the database can be reliably predicted. The application notifies you immediately if this condition is not satisfied.
 
 ## Installation
 The project was tested on Windows 10 and Xubuntu 16.04.
@@ -24,7 +24,7 @@ Download the project from GitHub to a desired location
 ### Predictions
 
 #### Via RStudio
-Using RStudio makes the whole process a lot easier, without requiring root privileges / administrator rights.
+Using RStudio makes the whole process a lot more user-friendly and is therefore recommended.
 
 * Install [RStudio](https://www.rstudio.com/products/rstudio/download/) if you have not yet done so.
 * Open "app.R" in RStudio.
@@ -40,7 +40,7 @@ cd to the download location
 
 Note: There may be a problem with the "slam" package on unix-based systems, hence you may want to install it manually before proceeding:
 
-	sudo apt-get install r-cran-slam
+    sudo apt-get install r-cran-slam
 
 Install required packages:
 
