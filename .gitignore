@@ -5,3 +5,5 @@ DataDownload/DataRaw/
 stats.R
 DataDownload/current.download.ini
 DataDownload/current.screenshot.ini
+Evaluation/Evaluation.Reg.Predictibility.R
+*.png

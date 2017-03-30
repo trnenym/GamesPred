@@ -1,92 +1,92 @@
-# Evaluation on continuous class attribute
-
-# validation: whether evaluating on validation or test set
-# seed: random generator seed
+#' Evaluation on continuous class attribute
+#'
+#' @param validation whether evaluating on validation or test set
+#' @param seed random generator seed
 Evaluation.Reg <- function(validation = FALSE, seed = 1) {
   set.seed(seed)
-  
+
   cat("\n")
   cat("Evaluating on continuous class attribute (",if(validation) "validation" else "test"," set)\n", sep = "")
-  
+
   results <- data.frame(actual = numeric(0), predicted = numeric(0))
-  
+
   dataset.train.name <- paste("./DataProcess/Datasets/dataset.train.reg",".RData",sep = "")
   dataset.val.name <- paste("./DataProcess/Datasets/dataset.val.reg",".RData",sep = "")
   dataset.test.name <- paste("./DataProcess/Datasets/dataset.test.reg",".RData",sep = "")
-  
+
   load(dataset.train.name)
   load(dataset.val.name)
   load(dataset.test.name)
-  
+
   # score <- chi.squared(Players~., dataset.train)
-  # 
+  #
   # threshold <- 0.2
-  # 
+  #
   # dataset.train <- dataset.train[,score$attr_importance >= threshold]
   # dataset.val <- dataset.val[,score$attr_importance >= threshold]
   # dataset.test <- dataset.test[,score$attr_importance >= threshold]
-  
+
   if(validation) {
     dataset.test <- dataset.val
   }
-  
+
   actual <- dataset.test$Players
-  
+
   # model <- randomForest(Players ~ ., data = dataset.train, ntree = 200)
   model <- svm(Players ~ ., data = dataset.train, kernel = "polynomial", coef0 = 0.5, gamma = 0.003)
-  save(model, file = "./Prediction/model.RData")
-  
+  # save(model, file = "./Prediction/model.RData")
+
   # names <- colnames(dataset.train)
   # formula <- as.formula(paste("Players ~", paste(names[!names %in% "Players"], collapse = " + ")))
-  # model <- neuralnet(formula, data = dataset.train, hidden = c(16,8), threshold = 0.3)
-  
+  # model <- neuralnet(formula, data = dataset.train, hidden = c(32), threshold = 0.3)
+
   dataset.test <- dataset.test[,-c(ncol(dataset.test))]
-  
+
   predictions <- predict(model, newdata = dataset.test)
-  
+
   # predictions <- compute(model, dataset.test)
   # predictions <- predictions$net.result[,1]
-  
+
   predictions[predictions<0] <- 0
-  
+
   results <- rbind(results, data.frame(actual, predictions))
-  
+
   cat("Results: \n\n")
-  
+
   cat("+-1 from actual:", nrow(subset(results, actual <= predictions + 1 & actual >= predictions - 1))/nrow(results))
   cat(" with baseline:", nrow(subset(results, actual <= 2+min(actual)))/nrow(results), "\n")
-  
+
   cat("+-2 from actual:", nrow(subset(results, actual <= predictions + 2 & actual >= predictions - 2))/nrow(results))
   cat(" with baseline:", nrow(subset(results, actual <= 4+min(actual)))/nrow(results), "\n")
-  
+
   cat("+-3 from actual:", nrow(subset(results, actual <= predictions + 3 & actual >= predictions - 3))/nrow(results))
   cat(" with baseline:", nrow(subset(results, actual <= 6+min(actual)))/nrow(results), "\n\n")
-  
+
   cat("MAE:", mae(results$actual, results$predictions), "\n")
   cat("RMSE:", rmse(results$actual, results$predictions), "\n")
   cat("NRMSE:", rmse(results$actual, results$predictions) / sd(results$actual), "\n")
   cat("COR:", cor(results$actual, results$predictions, method = "pearson"), "\n")
-  
+
   results.ordered <- results[order(results$actual),]
   table.actual <- table(results$actual)
-  
+
   old.par <- par(no.readonly=T)
   par(mar=c(5, 5, 4, 2) + 0.1)
-  
+
   plot(results$predictions, results$actual, xlim = c(0,16), ylim = c(0,16), col = "red", las = 1, main = "Regression (SVM, polynomial kernel)"
        , xlab = "predicted", ylab = "actual", cex.lab=1.5, cex.main=1.7, cex.axis=1.5)
   abline(0,1)
   abline(2,1, col = "gray")
   abline(-2,1, col = "gray")
-  
+
   par(old.par)
-  
+
   # Save predictions
   dataset.test.predictions <- dataset.test
   dataset.test.predictions$ID <- rownames(dataset.test)
   dataset.test.predictions$ActualPlayers <- actual
   dataset.test.predictions$PredictedPlayers <- predictions
   dataset.test.predictions <- dataset.test.predictions[,-c(1:(ncol(dataset.test.predictions)-3))]
-  
+
   save(dataset.test.predictions, file = "./DataProcess/Data/test.reg.predictions.RData")
 }

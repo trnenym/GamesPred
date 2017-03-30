@@ -65,20 +65,10 @@ Prediction.Reg <- function(dataset.new, new.game.data) {
     pair <- rbind(new.game.data, dataset[which(dataset.test.predictions.ordered$ID[i] == dataset$ID),])
     pair <- pair[,-ncol(pair)]
     columns.same <- sapply(seq_len(ncol(pair)), function(x) {
-      # length(unique(pair[,x])) == 1 && if(is.logical(pair[,x]) && !pair[1,x]) names(pair[x]) %in% logical.features.to.return else TRUE
-      # if(length(unique(pair[,x])) == 1
-      #    && (!is.logical(pair[,x]) || (is.logical(pair[,x]) && (pair[1,x] || (!pair[1,x] && names(pair[x]) %in% logical.features.to.return)))))
-      #   names(pair[x])
-      # else
-      #   NA
-      
-      
       if(length(unique(pair[,x])) == 1 && !is.logical(pair[,x])) return(attr.to.string(names(pair[x])))
       if(length(unique(pair[,x])) == 1 && is.logical(pair[,x]) && pair[1,x]) return(attr.to.string(names(pair[x])))
-      # if(length(unique(pair[,x])) == 1 && is.logical(pair[,x]) && !pair[1,x] && names(pair[x]) %in% logical.features.to.return)
-      #     return(attr.to.string(names(pair[x]), prefix = "No "))
       return(NA)
-      })
+    })
     
     dataset.test.predictions.ordered$CommonAttributes[i] <- paste0(na.omit(columns.same), collapse = ", ")
   }
