@@ -1,50 +1,54 @@
 #' Training, validation, and test set are processed separately, some data is saved during the creation of train set to make further processing faster
-#' 
+#'
 #' @param dataset.processed dataset passed from DataProcess03.Split.R
 #' @param type type of processed dataset: "train", "val" (validation) or "test"
-#' @param mode "reg" for regression or "class" for classification
 #' @param min.devpub only games by a developer/publisher with this many games on their account are processed
 #' @param seed random generator seed
-#' @param top.terms how many top terms (based on information gain) from a description's document-term matrix should be selected
-process.final <- function(dataset.processed, type, mode, evaluation, min.devpub, seed = 1, top.terms = 50) {
-  
+#' @param top.terms how many top terms (based on information gain) from a description's document-term matrix should be selected; all if top.terms = 0
+#' @param pca.ncomp if > 0, top.terms will be tranformed to this number of principal components
+process.final <- function(dataset.processed, type, evaluation, min.devpub, seed = 1, top.terms = 50, pca.ncomp = 0, train.cache = FALSE) {
+
   if(!(type == "train" || type == "val" || type == "test")) {
     stop("Wrong type")
   }
-  
+
   # Cache for data that will be needed later
-  if(type == "train") {
+  if(type == "train" && !train.cache) {
     cache <- list()
+  } else if(type == "train" && train.cache && !file.exists("./DataProcess/Data/cache.RData")) {
+    cat("No cache file present, performing full run...", "\n")
+    cache <- list()
+    train.cache = FALSE
   } else {
     load("./DataProcess/Data/cache.RData")
   }
-  
+
   if(type == "train") {
     cache$seed <- seed
   } else {
     seed <- cache$seed
   }
-  
+
   set.seed(seed)
-  
+
   cat("Processing developers and publishers...", "\n")
-  
+
   # Experiments show that it only makes sense to predict games from developer/publisher who has already released at least two games
   # Only these games are kept
-  if(type == "train") {
-    pubs.exp.table <- as.data.frame(table(dataset.processed$Publisher))
-    pubs.exp <- droplevels(pubs.exp.table[pubs.exp.table$Freq >= abs(min.devpub), 1])
-    cache$pubs.exp <- pubs.exp
-    
-    devs.exp.table <- as.data.frame(table(dataset.processed$Developer))
-    devs.exp <- droplevels(devs.exp.table[devs.exp.table$Freq >= abs(min.devpub), 1])
-    cache$devs.exp <- devs.exp
-  } else {
-    pubs.exp <- cache$pubs.exp
-    devs.exp <- cache$devs.exp
-  }
-  
-  if(evaluation) {
+  if(evaluation && min.devpub != 0) {
+    if(type == "train") {
+      pubs.exp.table <- as.data.frame(table(dataset.processed$Publisher))
+      pubs.exp <- droplevels(pubs.exp.table[pubs.exp.table$Freq >= abs(min.devpub), 1])
+      cache$pubs.exp <- pubs.exp
+
+      devs.exp.table <- as.data.frame(table(dataset.processed$Developer))
+      devs.exp <- droplevels(devs.exp.table[devs.exp.table$Freq >= abs(min.devpub), 1])
+      cache$devs.exp <- devs.exp
+    } else {
+      pubs.exp <- cache$pubs.exp
+      devs.exp <- cache$devs.exp
+    }
+
     if(type == "train") {
       dataset.processed$DevExp <- "other"
       for (i in 1:nrow(dataset.processed)) {
@@ -65,7 +69,7 @@ process.final <- function(dataset.processed, type, mode, evaluation, min.devpub,
       additional.levels <- setdiff(levels(dataset.processed$DevExp), levels(dataset.processed$DevExp))
       levels(dataset.processed$DevExp) <- c(levels(dataset.processed$DevExp), additional.levels)
     }
-    
+
     if(type == "train") {
       dataset.processed$PubExp <- "other"
       for (i in 1:nrow(dataset.processed)) {
@@ -86,88 +90,89 @@ process.final <- function(dataset.processed, type, mode, evaluation, min.devpub,
       additional.levels <- setdiff(levels(dataset.processed$PubExp), levels(dataset.processed$PubExp))
       levels(dataset.processed$PubExp) <- c(levels(dataset.processed$PubExp), additional.levels)
     }
-    
-    if(min.devpub >= 0) {
+
+    if(min.devpub > 0) {
       dataset.processed <- subset(dataset.processed, DevExp != "other" | PubExp != "other")
     } else {
       dataset.processed <- subset(dataset.processed, DevExp == "other" & PubExp == "other")
     }
-    
+
     dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "DevExp")]
     dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "PubExp")]
   }
-  
-  
-  # Add an attributes for developers and publishers containing the developer/publisher or "other" if they don't belong to the top 52
+
+
+  # Add attributes for developers and publishers containing the developer/publisher or "other" if they don't belong to the top 52
   # (Random Forest has a limit of 53 levels)
-  if(type == "train") {
-    devs.top.table <- as.data.frame(table(dataset.processed$Developer))
-    devs.top.table <- devs.top.table[order(devs.top.table$Freq, decreasing = TRUE),]
-    devs.top <- factor(devs.top.table$Var1[1:52], levels = c(as.character(devs.top.table$Var1[1:52]), "other"))
-    cache$devs.top <- devs.top
-    
-    dataset.processed$DevTop <- factor("other", levels = levels(devs.top))
-    for (i in 1:nrow(dataset.processed)) {
-      if(dataset.processed$Developer[i] %in% devs.top) {
-        dataset.processed$DevTop[i] <- dataset.processed$Developer[i]
+  if(min.devpub >= 0) {
+    if(type == "train") {
+      devs.top.table <- as.data.frame(table(dataset.processed$Developer))
+      devs.top.table <- devs.top.table[order(devs.top.table$Freq, decreasing = TRUE),]
+      devs.top <- factor(devs.top.table$Var1[1:52], levels = c(as.character(devs.top.table$Var1[1:52]), "other"))
+      cache$devs.top <- devs.top
+
+      dataset.processed$DevTop <- factor("other", levels = levels(devs.top))
+      for (i in 1:nrow(dataset.processed)) {
+        if(dataset.processed$Developer[i] %in% devs.top) {
+          dataset.processed$DevTop[i] <- dataset.processed$Developer[i]
+        }
+      }
+    } else {
+      devs.top <- cache$devs.top
+      dataset.processed$DevTop <- factor("other", levels = levels(devs.top))
+      for (i in 1:nrow(dataset.processed)) {
+        if(dataset.processed$Developer[i] %in% devs.top) {
+          dataset.processed$DevTop[i] <- dataset.processed$Developer[i]
+        }
       }
     }
-  } else {
-    devs.top <- cache$devs.top
-    dataset.processed$DevTop <- factor("other", levels = levels(devs.top))
-    for (i in 1:nrow(dataset.processed)) {
-      if(dataset.processed$Developer[i] %in% devs.top) {
-        dataset.processed$DevTop[i] <- dataset.processed$Developer[i]
+
+    if(type == "train") {
+      pubs.top.table <- as.data.frame(table(dataset.processed$Publisher))
+      pubs.top.table <- pubs.top.table[order(pubs.top.table$Freq, decreasing = TRUE),]
+      pubs.top <- factor(pubs.top.table$Var1[1:52], levels = c(as.character(pubs.top.table$Var1[1:52]), "other"))
+      cache$pubs.top <- pubs.top
+
+      dataset.processed$PubTop <- factor("other", levels = levels(pubs.top))
+      for (i in 1:nrow(dataset.processed)) {
+        if(dataset.processed$Publisher[i] %in% pubs.top) {
+          dataset.processed$PubTop[i] <- dataset.processed$Publisher[i]
+        }
+      }
+    } else {
+      pubs.top <- cache$pubs.top
+      dataset.processed$PubTop <- factor("other", levels = levels(pubs.top))
+      for (i in 1:nrow(dataset.processed)) {
+        if(dataset.processed$Publisher[i] %in% pubs.top) {
+          dataset.processed$PubTop[i] <- dataset.processed$Publisher[i]
+        }
       }
     }
   }
-  
-  
-  if(type == "train") {
-    pubs.top.table <- as.data.frame(table(dataset.processed$Publisher))
-    pubs.top.table <- pubs.top.table[order(pubs.top.table$Freq, decreasing = TRUE),]
-    pubs.top <- factor(pubs.top.table$Var1[1:52], levels = c(as.character(pubs.top.table$Var1[1:52]), "other"))
-    cache$pubs.top <- pubs.top
-    
-    dataset.processed$PubTop <- factor("other", levels = levels(pubs.top))
-    for (i in 1:nrow(dataset.processed)) {
-      if(dataset.processed$Publisher[i] %in% pubs.top) {
-        dataset.processed$PubTop[i] <- dataset.processed$Publisher[i]
-      }
-    }
-  } else {
-    pubs.top <- cache$pubs.top
-    dataset.processed$PubTop <- factor("other", levels = levels(pubs.top))
-    for (i in 1:nrow(dataset.processed)) {
-      if(dataset.processed$Publisher[i] %in% pubs.top) {
-        dataset.processed$PubTop[i] <- dataset.processed$Publisher[i]
-      }
-    }
-  }
-  
+
   class.helper.processed <- dataset.processed$ClassHelper
   dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "ClassHelper")]
-  
-  players.train <- dataset.processed$Players
+
+  players.processed <- dataset.processed$Players
   dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "Players")]
-  
-  class.train <- dataset.processed$Class
+
+  class.processed <- dataset.processed$Class
   dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "Class")]
-  
+
   # Create document-term matrix and select top top.terms terms based on information gain
-  
+
   if((type == "train" && top.terms > 0) || (type != "train" && !is.null(cache$terms.selected))) {
     cat("Processing descriptions...", "\n")
-    
-    if(type == "train") {
-      description.tdm.list <- create.tdm(dataset.processed$Description, lbound = 10)
+
+    if(type == "train" && !train.cache) {
+      description.tdm.list <- create.tdm(dataset.processed$Description, lbound = 5)
       cache$dictionary <- description.tdm.list$dictionary
     } else {
       dictionary <- cache$dictionary
       description.tdm.list <- create.tdm(dataset.processed$Description, dictionary = dictionary)
     }
-    
-    if(type == "train") {
+
+    if(type == "train" && !train.cache) {
       description.tdm <- cbind(description.tdm.list$tdm, ClassHelper = class.helper.processed)
       score <- InfoGainAttributeEval(ClassHelper~., description.tdm)
       score <- data.frame(Terms = colnames(description.tdm.list$tdm), AttrImportance = score)
@@ -177,19 +182,35 @@ process.final <- function(dataset.processed, type, mode, evaluation, min.devpub,
       description.tdm <- description.tdm.list$tdm
       terms.selected <- cache$terms.selected
     }
-    
+
     description.tdm.sig <- subset(description.tdm, select = terms.selected)
-    
+    description.tdm.sig <- description.tdm.sig[, order(colnames(description.tdm.sig))]
+
     colnames(description.tdm.sig) <- gsub("[^\\w]", "", colnames(description.tdm.sig), perl = TRUE)
     colnames(description.tdm.sig) <- sapply(colnames(description.tdm.sig), function(x) paste0("DescTF", x))
-    dataset.processed <- cbind(dataset.processed, description.tdm.sig)
+
+    if(pca.ncomp > 0 || (type != "train" && !is.null(cache$loadings))) {
+      if(type == "train") {
+        pca.list <- create.pca(description.tdm.sig, ncomp = pca.ncomp, name.prefix = "TDMPCA")
+        pca <- pca.list$pca
+        loadings <- pca.list$loadings
+        cache$tdm.loadings <- loadings
+      } else {
+        loadings <- cache$tdm.loadings
+        pca.list <- create.pca(description.tdm.sig, loadings = loadings, ncomp = ncol(loadings), name.prefix = "TDMPCA")
+        pca <- pca.list$pca
+      }
+      dataset.processed <- cbind(dataset.processed, pca)
+    } else {
+      dataset.processed <- cbind(dataset.processed, description.tdm.sig)
+    }
   }
-  
+
   cat("Reducing the size of the dataset...", "\n")
-  
+
   # Basic attribute filtering
   if(type == "train") {
-    min.support <- 10
+    min.support <- 5
     to.delete <- c(1:4,10,11)
     for(i in 1:ncol(dataset.processed)) {
       freqs <- as.data.frame(table(dataset.processed[,i]))$Freq
@@ -201,116 +222,130 @@ process.final <- function(dataset.processed, type, mode, evaluation, min.devpub,
   } else {
     to.delete <- cache$to.delete
   }
-  
+
   dataset.processed <- dataset.processed[,-to.delete]
-  
+
   # Imputing missing values
   dataset.processed.na <- sapply(c(1:ncol(dataset.processed)), function(x) !all(is.finite(dataset.processed[,x])))
-  
+
   if(any(dataset.processed.na)) {
+    dataset.processed$AgeRequirements <- as.factor(dataset.processed$AgeRequirements)
+    dataset.processed$HWCPU <- as.factor(dataset.processed$HWCPU)
+    dataset.processed$HWRAM <- as.factor(dataset.processed$HWRAM)
+    dataset.processed$HWDx <- as.factor(dataset.processed$HWDx)
+
     cat("Imputing missing values for:", colnames(dataset.processed)[dataset.processed.na], "\n")
-    
+
     if(type == "train") {
-      dataset.processed$Players <- players.train
-      
+      dataset.processed$Players <- players.processed
+
       dataset.processed.imp <- missForest(dataset.processed)
       dataset.processed[,dataset.processed.na] <- dataset.processed.imp$ximp[dataset.processed.na]
       dataset.processed <- dataset.processed[,-ncol(dataset.processed)]
       cache$imp <- dataset.processed
-    } else {
-      
-      # cat("Pass 2/2", "\n")
-      if(any(dataset.processed.na)) {
-        imp <- cache$imp
-        
-        dataset.combined <- rbind(imp, dataset.processed)
-        dataset.combined.imp <- missForest(dataset.combined)
-        
-        dataset.processed[,dataset.processed.na] <- dataset.combined.imp$ximp[(nrow(imp) + 1):(nrow(dataset.combined)), dataset.processed.na]
-      }
+    } else if(any(dataset.processed.na)) {
+      imp <- cache$imp
+
+      dataset.combined <- rbind(imp, dataset.processed)
+      dataset.combined.imp <- missForest(dataset.combined)
+
+      dataset.processed[,dataset.processed.na] <- dataset.combined.imp$ximp[(nrow(imp) + 1):(nrow(dataset.combined)), dataset.processed.na]
     }
+
+    dataset.processed$AgeRequirements <- as.numeric(as.character(dataset.processed$AgeRequirements))
+    dataset.processed$HWCPU <- as.numeric(as.character(dataset.processed$HWCPU))
+    dataset.processed$HWRAM <- as.numeric(as.character(dataset.processed$HWRAM))
+    dataset.processed$HWDx <- as.numeric(as.character(dataset.processed$HWDx))
   }
-  
+
   # Attributes are converted to numeric
   for (i in 1:ncol(dataset.processed)) {
     if(!is.numeric(dataset.processed[,i])) {
-      dataset.processed[,i] <- as.numeric(dataset.processed[,i])
+      dataset.processed[,i] <- round(as.numeric(dataset.processed[,i]), 2)
     }
   }
-  
-  dataset.processed$Players <- players.train
-  dataset.processed$Class <- class.train
-  
-  # There are way more games with low number of players. Therefore, games with higher numbers are repeated
-  if(type == "train") {
-    cat("Adjusting class distribution in training data...", "\n")
-    
-    classes <- lapply(c(1:length(levels(dataset.processed$Class))), function(x) dataset.processed[dataset.processed$Class == x,])
-    dataset.processed.tmp <- classes[[1]]
-    
-    for (i in 2:length(levels(dataset.processed$Class))) {
-      dataset.processed.tmp <- rbind(dataset.processed.tmp, classes[[i]][sample(nrow(classes[[i]]), nrow(classes[[i]]) * (i - 1), replace = T),])
-    }
-    dataset.processed <- dataset.processed.tmp
-  }
-  
+
+  dataset.processed$Players <- players.processed
+  dataset.processed$Class <- class.processed
+
   cat("Finishing...", "\n")
-  
-  dataset.processed <- dataset.processed[,-(ncol(dataset.processed) - mode)]
-  
+
   if(type == "train") {
     save(cache, file = "./DataProcess/Data/cache.RData")
   }
-  
-  if(mode == 0) {
-    if(type == "train") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train.reg",".RData",sep = "")
-      dataset.train <- dataset.processed
-      save(dataset.train, file = dataset.processed.name)
-      return(NULL)
+
+  players.processed <- dataset.processed$Players
+  class.processed <- dataset.processed$Class
+  dataset.processed.backup <- dataset.processed
+
+  dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "Class")]
+
+  if(type == "train") {
+    cat("Adjusting class distribution in training data...", "\n")
+
+    indices.repeated <- c()
+    for (i in 1:nrow(dataset.processed)) {
+      pl <- ceiling(dataset.processed$Players[i])
+      if(pl > 3) {
+        pl <- pl - 2
+      } else {
+        pl <- 1
+      }
+      indices.repeated <- c(indices.repeated, rep(i,pl))
     }
-    if(type == "val") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val.reg",".RData",sep = "")
-      dataset.val <- dataset.processed
-      save(dataset.val, file = dataset.processed.name)
-      return(NULL)
-    }
-    if(evaluation && type == "test") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test.reg",".RData",sep = "")
-      dataset.test <- dataset.processed
-      save(dataset.test, file = dataset.processed.name)
-      return(NULL)
-    }
-    if(!evaluation && type == "test") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new.reg",".RData",sep = "")
-      dataset.new <- dataset.processed
-      return(dataset.new)
-    }
-  } else {
-    if(type == "train") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train.class",".RData",sep = "")
-      dataset.train <- dataset.processed
-      save(dataset.train, file = dataset.processed.name)
-      return(NULL)
-    }
-    if(type == "val") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val.class",".RData",sep = "")
-      dataset.val <- dataset.processed
-      save(dataset.val, file = dataset.processed.name)
-      return(NULL)
-    }
-    if(evaluation && type == "test") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test.class",".RData",sep = "")
-      dataset.test <- dataset.processed
-      save(dataset.test, file = dataset.processed.name)
-      return(NULL)
-    }
-    if(!evaluation && type == "test") {
-      dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new.class",".RData",sep = "")
-      dataset.new <- dataset.processed
-      return(dataset.new)
-    }
+    dataset.processed <- dataset.processed[indices.repeated,]
+
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train.reg",".RData",sep = "")
+    dataset.train <- dataset.processed
+    save(dataset.train, file = dataset.processed.name)
   }
-  
+  if(type == "val") {
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val.reg",".RData",sep = "")
+    dataset.val <- dataset.processed
+    save(dataset.val, file = dataset.processed.name)
+  }
+  if(evaluation && type == "test") {
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test.reg",".RData",sep = "")
+    dataset.test <- dataset.processed
+    save(dataset.test, file = dataset.processed.name)
+  }
+  if(!evaluation && type == "test") {
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new.reg",".RData",sep = "")
+    dataset.new <- dataset.processed
+    return(dataset.new)
+  }
+
+  dataset.processed <- dataset.processed.backup[,-which(colnames(dataset.processed.backup) == "Players")]
+
+  if(type == "train") {
+    classes <- lapply(c(1:length(levels(dataset.processed$Class))), function(x) dataset.processed[dataset.processed$Class == x,])
+    dataset.processed.tmp <- classes[[1]][sample(nrow(classes[[1]]), nrow(classes[[1]]) / 1, replace = F),]
+
+    for (i in 2:length(levels(dataset.processed$Class))) {
+      dataset.processed.tmp <- rbind(dataset.processed.tmp, classes[[i]][sample(nrow(classes[[i]]), nrow(classes[[i]]) * (i - 0), replace = T),])
+    }
+    dataset.processed <- dataset.processed.tmp
+
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train.class",".RData",sep = "")
+    dataset.train <- dataset.processed
+    save(dataset.train, file = dataset.processed.name)
+  }
+  if(type == "val") {
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val.class",".RData",sep = "")
+    dataset.val <- dataset.processed
+    save(dataset.val, file = dataset.processed.name)
+  }
+  if(evaluation && type == "test") {
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test.class",".RData",sep = "")
+    dataset.test <- dataset.processed
+    save(dataset.test, file = dataset.processed.name)
+  }
+  if(!evaluation && type == "test") {
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new.class",".RData",sep = "")
+    dataset.new <- dataset.processed
+    return(dataset.new)
+  }
+
+
   cat("Done!", "\n\n")
 }

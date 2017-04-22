@@ -7,3 +7,7 @@ DataDownload/current.download.ini
 DataDownload/current.screenshot.ini
 Evaluation/Evaluation.Reg.Predictibility.R
 *.png
+SteamSpy/
+DataProcess/experiments.R
+DataProcess/Datasets/dataset.owners.RData
+Evaluation/Evaluation.Reg.Predictibility.R

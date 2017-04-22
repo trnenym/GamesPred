@@ -24,8 +24,8 @@ Evaluation.Class <- function(validation = FALSE, seed = 1) {
 
   actual <- dataset.test$Class
 
-  # model <- randomForest(Class ~ ., data = dataset.train, ntree = 400, mtry = 5)
-  model <- svm(Class ~ ., data = dataset.train, kernel = "polynomial", coef0 = 0.5, gamma = 0.001)
+  model <- randomForest(Class ~ ., data = dataset.train, ntree = 400)
+  # model <- svm(Class ~ ., data = dataset.train, kernel = "polynomial", coef0 = 0.5, gamma = 0.001)
   # model <- naiveBayes(Class ~ ., data = dataset.train)
   # model <- rpart(Class ~ ., data = dataset.train, method = "class", control = rpart.control(cp = 0.0005))
 

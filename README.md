@@ -78,8 +78,8 @@ split - how dataset should be split into train, validation, and test set
 mode - "reg" for regression or "class" for classification  
 intervals - players are split into classes which are then used for classification and are also balanced  
 seed - random generator seed  
-top.terms - how many top terms (based on information gain) from a description's document-term matrix should be selected
-
+top.terms - how many top terms (based on information gain) from a description's document-term matrix should be selected; all if top.terms = 0
+pca.ncomp - if > 0, top.terms will be tranformed to this number of principal components
 
 ## Details
 
