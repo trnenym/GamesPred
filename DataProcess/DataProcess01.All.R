@@ -85,11 +85,11 @@ DataProcess01.Raw <- function() {
     }
 
     #Launch price (the oldest record available)
-    if(length(gamedata[[1]]$launch.price) == 0 || is.na(gamedata[[1]]$launch.price)) {
+    if(length(gamedata[[1]]$launch.price) == 0 || is.na(gamedata[[1]]$launch.price) || gamedata[[1]]$launch.price == 0) {
       dataset.all$Price[i] <- NA
       relevant <- FALSE
     } else {
-      dataset.all$Price[i] <- round(gamedata[[1]]$launch.price, 0)
+      dataset.all$Price[i] <- round(gamedata[[1]]$launch.price, 2)
     }
 
     #Short description

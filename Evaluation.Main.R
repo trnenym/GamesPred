@@ -14,9 +14,9 @@ Evaluate <- function(update = TRUE, split = c(0.60, 0.20, 0.20), intervals = c(2
   Init(TRUE)
 
   if(update) {
-    # # Download raw data into individual files
-    # source("./DataDownload/DataDownload.R")
-    # DataDownload()
+    # Download raw data into individual files
+    source("./DataDownload/DataDownload.R")
+    DataDownload()
 
     # Create a table
     source("./DataProcess/DataProcess01.All.R")

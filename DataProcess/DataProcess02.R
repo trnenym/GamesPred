@@ -137,7 +137,7 @@ DataProcess02 <- function(evaluation = FALSE, game.predicted = NULL) {
     dataset$Casual[i] <- "Casual" %in% genres
     dataset$Sports[i] <- "Sports" %in% genres
     dataset$MassivelyMultiplayer[i] <- "Massively Multiplayer" %in% genres
-    dataset$Education[i] <- "Education" %in% genres
+    # dataset$Education[i] <- "Education" %in% genres # 2 games?
     dataset$Indie[i] <- "Indie" %in% genres
 
     # Description length

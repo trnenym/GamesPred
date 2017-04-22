@@ -48,6 +48,9 @@ Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.no
   attrs <- colnames(dataset.train)
   save(attrs, file = "./Prediction/attrs.RData")
 
+  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "DevPrevGamesCount"):which(colnames(dataset.train) == "PubPrevGamesIneq"))]
+  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "DevTop"):which(colnames(dataset.train) == "PubTop"))]
+
   # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "SColorsFull"):which(colnames(dataset.train) == "SColorValAverage"))]
   # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "SColorsFull"):which(colnames(dataset.test) == "SColorValAverage"))]
 
