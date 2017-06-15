@@ -14,9 +14,9 @@ Evaluate <- function(update = TRUE, split = c(0.60, 0.20, 0.20), intervals = c(2
   Init(TRUE)
 
   if(update) {
-    # Download raw data into individual files
-    source("./DataDownload/DataDownload.R")
-    DataDownload()
+    # # Download raw data into individual files
+    # source("./DataDownload/DataDownload.R")
+    # DataDownload()
 
     # Create a table
     source("./DataProcess/DataProcess01.All.R")
@@ -32,7 +32,7 @@ Evaluate <- function(update = TRUE, split = c(0.60, 0.20, 0.20), intervals = c(2
 
     # Dataset is split into training, validation, and test set and attributes dependent on this split are added
     source("./DataProcess/DataProcess03.Split.R")
-    DataProcess03.Split(split = split, intervals = intervals, evaluation = TRUE, min.devpub = 2, seed = seed
+    DataProcess03.Split(split = split, evaluation = TRUE, min.devpub = 2, seed = seed
                         , top.terms = top.terms, pca.ncomp = pca.ncomp)
   }
 
@@ -45,8 +45,8 @@ Evaluate <- function(update = TRUE, split = c(0.60, 0.20, 0.20), intervals = c(2
     if(mode == "class") {
       # Perform validation and testing
       source("./Evaluation/Evaluation.Class.R")
-      Evaluation.Class(validation = TRUE, seed = seed)
-      Evaluation.Class(validation = FALSE, seed = seed)
+      Evaluation.Class(intervals = intervals, validation = TRUE, seed = seed)
+      Evaluation.Class(intervals = intervals, validation = FALSE, seed = seed)
     } else {
       stop(paste('Unrecognized mode "', mode, '"', sep = ""))
     }

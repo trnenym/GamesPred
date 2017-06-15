@@ -20,7 +20,7 @@ Predict.game <- function(new.game) {
 
       # Use previously created train set to further infer new attributes
       source("./DataProcess/DataProcess03.Split.R")
-      new.game.processed <- DataProcess03.Split(mode = "reg", new.game = new.game.data, thumbnail = new.game.info$thumbnail)
+      new.game.processed <- DataProcess03.Split(new.game = new.game.data, thumbnail = new.game.info$thumbnail)
 
       # Make a prediction
       source("./Prediction/Prediction.Reg.R")

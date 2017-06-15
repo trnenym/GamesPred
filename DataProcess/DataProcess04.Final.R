@@ -156,9 +156,6 @@ process.final <- function(dataset.processed, type, evaluation, min.devpub, seed 
   players.processed <- dataset.processed$Players
   dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "Players")]
 
-  class.processed <- dataset.processed$Class
-  dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "Class")]
-
   # Create document-term matrix and select top top.terms terms based on information gain
 
   if((type == "train" && top.terms > 0) || (type != "train" && !is.null(cache$terms.selected))) {
@@ -234,22 +231,15 @@ process.final <- function(dataset.processed, type, evaluation, min.devpub, seed 
     dataset.processed$HWRAM <- as.factor(dataset.processed$HWRAM)
     dataset.processed$HWDx <- as.factor(dataset.processed$HWDx)
 
-    cat("Imputing missing values for:", colnames(dataset.processed)[dataset.processed.na], "\n")
-
     if(type == "train") {
-      dataset.processed$Players <- players.processed
-
-      dataset.processed.imp <- missForest(dataset.processed)
-      dataset.processed[,dataset.processed.na] <- dataset.processed.imp$ximp[dataset.processed.na]
-      dataset.processed <- dataset.processed[,-ncol(dataset.processed)]
-      cache$imp <- dataset.processed
+      dataset.processed.imp <- impute.learn(dataset.processed)
+      dataset.processed <- dataset.processed.imp$imp
+      cache$imp <- dataset.processed.imp$models
     } else if(any(dataset.processed.na)) {
       imp <- cache$imp
 
-      dataset.combined <- rbind(imp, dataset.processed)
-      dataset.combined.imp <- missForest(dataset.combined)
-
-      dataset.processed[,dataset.processed.na] <- dataset.combined.imp$ximp[(nrow(imp) + 1):(nrow(dataset.combined)), dataset.processed.na]
+      dataset.processed.imp <- impute.predict(dataset.processed, imp)
+      dataset.processed <- dataset.processed.imp
     }
 
     dataset.processed$AgeRequirements <- as.numeric(as.character(dataset.processed$AgeRequirements))
@@ -261,12 +251,11 @@ process.final <- function(dataset.processed, type, evaluation, min.devpub, seed 
   # Attributes are converted to numeric
   for (i in 1:ncol(dataset.processed)) {
     if(!is.numeric(dataset.processed[,i])) {
-      dataset.processed[,i] <- round(as.numeric(dataset.processed[,i]), 2)
+      dataset.processed[,i] <- as.numeric(dataset.processed[,i])
     }
   }
 
   dataset.processed$Players <- players.processed
-  dataset.processed$Class <- class.processed
 
   cat("Finishing...", "\n")
 
@@ -274,78 +263,26 @@ process.final <- function(dataset.processed, type, evaluation, min.devpub, seed 
     save(cache, file = "./DataProcess/Data/cache.RData")
   }
 
-  players.processed <- dataset.processed$Players
-  class.processed <- dataset.processed$Class
-  dataset.processed.backup <- dataset.processed
-
-  dataset.processed <- dataset.processed[,-which(colnames(dataset.processed) == "Class")]
-
   if(type == "train") {
-    cat("Adjusting class distribution in training data...", "\n")
-
-    indices.repeated <- c()
-    for (i in 1:nrow(dataset.processed)) {
-      pl <- ceiling(dataset.processed$Players[i])
-      if(pl > 3) {
-        pl <- pl - 2
-      } else {
-        pl <- 1
-      }
-      indices.repeated <- c(indices.repeated, rep(i,pl))
-    }
-    dataset.processed <- dataset.processed[indices.repeated,]
-
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train.reg",".RData",sep = "")
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train",".RData",sep = "")
     dataset.train <- dataset.processed
     save(dataset.train, file = dataset.processed.name)
   }
   if(type == "val") {
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val.reg",".RData",sep = "")
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val",".RData",sep = "")
     dataset.val <- dataset.processed
     save(dataset.val, file = dataset.processed.name)
   }
   if(evaluation && type == "test") {
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test.reg",".RData",sep = "")
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test",".RData",sep = "")
     dataset.test <- dataset.processed
     save(dataset.test, file = dataset.processed.name)
   }
   if(!evaluation && type == "test") {
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new.reg",".RData",sep = "")
+    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new",".RData",sep = "")
     dataset.new <- dataset.processed
     return(dataset.new)
   }
-
-  dataset.processed <- dataset.processed.backup[,-which(colnames(dataset.processed.backup) == "Players")]
-
-  if(type == "train") {
-    classes <- lapply(c(1:length(levels(dataset.processed$Class))), function(x) dataset.processed[dataset.processed$Class == x,])
-    dataset.processed.tmp <- classes[[1]][sample(nrow(classes[[1]]), nrow(classes[[1]]) / 1, replace = F),]
-
-    for (i in 2:length(levels(dataset.processed$Class))) {
-      dataset.processed.tmp <- rbind(dataset.processed.tmp, classes[[i]][sample(nrow(classes[[i]]), nrow(classes[[i]]) * (i - 0), replace = T),])
-    }
-    dataset.processed <- dataset.processed.tmp
-
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.train.class",".RData",sep = "")
-    dataset.train <- dataset.processed
-    save(dataset.train, file = dataset.processed.name)
-  }
-  if(type == "val") {
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.val.class",".RData",sep = "")
-    dataset.val <- dataset.processed
-    save(dataset.val, file = dataset.processed.name)
-  }
-  if(evaluation && type == "test") {
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.test.class",".RData",sep = "")
-    dataset.test <- dataset.processed
-    save(dataset.test, file = dataset.processed.name)
-  }
-  if(!evaluation && type == "test") {
-    dataset.processed.name <- paste("./DataProcess/Datasets/dataset.new.class",".RData",sep = "")
-    dataset.new <- dataset.processed
-    return(dataset.new)
-  }
-
 
   cat("Done!", "\n\n")
 }

@@ -9,8 +9,8 @@
 #' @param seed random generator seed
 #' @param top.terms how many top terms (based on information gain) from a description's document-term matrix should be selected; all if top.terms = 0
 #' @param pca.ncomp if > 0, top.terms will be tranformed to this number of principal components
-DataProcess03.Split <- function(split = c(0.60, 0.20, 0.20), intervals = c(2,10,50,250,1000), mode = "reg", evaluation = FALSE
-                                , new.game = NULL, thumbnail = NULL, min.devpub = 2, seed = 1, top.terms = 50, pca.ncomp = 0, train.cache = FALSE) {
+DataProcess03.Split <- function(split = c(0.60, 0.20, 0.20), evaluation = FALSE, new.game = NULL, thumbnail = NULL, min.devpub = 2, seed = 1
+                                , top.terms = 50, pca.ncomp = 0, train.cache = FALSE) {
   source("./DataProcess/DataProcess04.Final.R")
 
   if(evaluation && (length(split) != 3 || !all.equal(sum(split), 1))) {
@@ -56,17 +56,6 @@ DataProcess03.Split <- function(split = c(0.60, 0.20, 0.20), intervals = c(2,10,
 
   dataset$Players <- players
 
-  # Players is continuous, Class is nominal based on given splits
-  dataset$Class <- NA
-
-  for (i in 1:nrow(dataset)) {
-    intervals.tmp <- c(intervals, dataset$Players[i])
-    intervals.tmp <- sort(intervals.tmp)
-    dataset$Class[i] <- match(dataset$Players[i], intervals.tmp)
-  }
-
-  dataset$Class <- as.factor(dataset$Class)
-
   # This is used for determining significant terms in descriptions
   intervals.helper <- c(quantile(dataset$Players, probs = (0.75)))
   dataset$ClassHelper <- NA
@@ -78,10 +67,6 @@ DataProcess03.Split <- function(split = c(0.60, 0.20, 0.20), intervals = c(2,10,
   }
 
   dataset$ClassHelper <- as.factor(dataset$ClassHelper)
-
-  # log adjustment to players
-  dataset$Players <- log(dataset$Players + 1, base = 2)
-  dataset$Players <- round(dataset$Players, 2)
 
   # The way games are allowed on Steam changed at the end of August, 2013
   dataset <- subset(dataset, Year > 2013 | (Year == 2013 & Month > 8))

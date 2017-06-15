@@ -227,3 +227,70 @@ attr.to.string <- function(attr.name, prefix = "") {
 
   return(paste0(prefix, name))
 }
+
+
+impute.learn <- function(x) {
+  library(randomForest)
+
+  x.na <- which(sapply(c(1:ncol(x)), function(a) !all(is.finite(x[,a]))))
+
+  if(length(x.na) > 0) {
+    names.na <- colnames(x)[x.na]
+
+    cat("Imputing missing values for:", names.na, "\n")
+
+    dataset.nonan <- x[,-x.na]
+    dataset.complete <- x
+    models <- list()
+
+    for(i in 1:length(x.na)) {
+      cat(i, "out of",length(x.na) , "\n")
+
+      dataset.i <- cbind(dataset.nonan, predicted = x[,x.na[i]])
+      i.na <- sapply(x[,x.na[i]], is.na)
+      dataset.i.nonan <- dataset.i[!i.na,]
+      model.i <- randomForest(predicted ~ ., data = dataset.i.nonan)
+      models[[i]] <- model.i
+
+      dataset.i.na <- dataset.i[i.na,-ncol(dataset.i)]
+      dataset.i.na.imp <- predict(model.i, newdata = dataset.i.na)
+
+      dataset.complete[i.na, x.na[i]] <- dataset.i.na.imp
+    }
+
+    return(list(imp = dataset.complete, models = list(models, names.na)))
+  } else {
+    return(list(imp = x, models = NULL))
+  }
+}
+
+impute.predict <- function(x, models) {
+  library(randomForest)
+
+  x.na <- which(sapply(c(1:ncol(x)), function(a) !all(is.finite(x[,a]))))
+
+  if(length(x.na) > 0) {
+    names.na <- colnames(x)[x.na]
+
+    cat("Imputing missing values for:", names.na, "\n")
+
+    dataset.nonan <- x[,-which(colnames(x) %in% models[[2]])]
+    dataset.complete <- x
+
+    for(i in 1:length(x.na)) {
+      cat(i, "out of",length(x.na) , "\n")
+
+      dataset.i <- cbind(dataset.nonan, x[,x.na[i]])
+      i.na <- sapply(x[,x.na[i]], is.na)
+
+      dataset.i.na <- dataset.i[i.na,-ncol(dataset.i)]
+      dataset.i.na.imp <- predict(models[[1]][[which(models[[2]] == names.na[i])]], newdata = dataset.i.na)
+
+      dataset.complete[i.na, x.na[i]] <- dataset.i.na.imp
+    }
+
+    return(dataset.complete)
+  } else {
+    return(x)
+  }
+}

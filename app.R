@@ -66,9 +66,9 @@ ui <- fluidPage(
     textInput("Developer", "Developer *"),
     textInput("Publisher", "Publisher *"),
     selectInput("AgeRequirements", "Age Requirements", choices = c("Everyone" = "e", "Early Childhood" = "ec", "Teen" = "t", "Mature" = "m"
-                                                                   , "Adults Only" = "ao", "Unknown/Rating Pending" = "rp")),
+                                                                   , "Adults Only" = "ao", "Unknown" = "rp")),
     dateInput("ReleaseDate", "Release date *", value = as.Date(Sys.time()), min = "2016-01-01", max = "2017-12-31"),
-    numericInput("Price", "Price (USD)", 20),
+    numericInput("Price", "Price (USD) *", 20),
     textAreaInput("ShortDescription", "Short Description"),
     textAreaInput("Description", "Long Description", rows = 10),
     checkboxGroupInput("Platforms", "Platforms", choices = c("Windows", "Mac", "Linux")),
@@ -92,8 +92,8 @@ ui <- fluidPage(
 
     fileInput("Thumbnail", "Select a thumbnail (.jpg)", accept = c(".jpg")),
 
-    numericInput("Screenshots", "Number of screenshots", 0),
-    numericInput("Trailers", "Number of trailers", 0),
+    numericInput("Screenshots", "Number of planned screenshots", 0),
+    numericInput("Trailers", "Number of planned trailers", 0),
 
     textInput("UserTags", "Other genre or theme specification (separated by commas - e.g. FPS, Horror)"),
 

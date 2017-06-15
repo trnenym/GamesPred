@@ -5,11 +5,9 @@ Prediction.Reg <- function(dataset.new, new.game.data) {
   cat("Making prediction\n")
   set.seed(61)
 
-  # logical.features.to.return <- c("SinglePlayer", "MultiPlayer", "Coop", "SteamAchievements", "SteamTradingCards")
-
   results <- data.frame(actual = numeric(0), predicted = numeric(0))
 
-  dataset.train.name <- paste("./DataProcess/Datasets/dataset.train.reg",".RData",sep = "")
+  dataset.train.name <- paste("./DataProcess/Datasets/dataset.train",".RData",sep = "")
   load(dataset.train.name)
   dataset.test <- dataset.new
 

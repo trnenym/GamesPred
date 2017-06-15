@@ -2,7 +2,7 @@
 #'
 #' @param validation whether evaluating on validation or test set
 #' @param seed random generator seed
-Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.nonsig = FALSE) {
+Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.nonsig = TRUE) {
   set.seed(seed)
 
   cat("\n")
@@ -10,17 +10,50 @@ Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.no
 
   results <- data.frame(actual = numeric(0), predicted = numeric(0))
 
-  dataset.train.name <- paste("./DataProcess/Datasets/dataset.train.reg",".RData",sep = "")
-  dataset.val.name <- paste("./DataProcess/Datasets/dataset.val.reg",".RData",sep = "")
-  dataset.test.name <- paste("./DataProcess/Datasets/dataset.test.reg",".RData",sep = "")
+  dataset.train.name <- paste("./DataProcess/Datasets/dataset.train",".RData",sep = "")
+  dataset.val.name <- paste("./DataProcess/Datasets/dataset.val",".RData",sep = "")
+  dataset.test.name <- paste("./DataProcess/Datasets/dataset.test",".RData",sep = "")
 
   load(dataset.train.name)
   load(dataset.val.name)
   load(dataset.test.name)
 
+  players.train <- dataset.train$Players
+  players.test <- dataset.test$Players
+
+  dataset.train <- na.roughfix(dataset.train[,-ncol(dataset.train)])
+  dataset.test <- na.roughfix(dataset.test[,-ncol(dataset.test)])
+
+  dataset.train$Players <- players.train
+  dataset.test$Players <- players.test
+
   if(validation) {
     dataset.test <- dataset.val
   }
+
+  cat("Original size of train:", nrow(dataset.train), "\n")
+  cat("Original attributes:", ncol(dataset.train), "\n")
+
+  # log adjustment to players
+  dataset.train$Players <- log(dataset.train$Players + 1, base = 2)
+  dataset.train$Players <- round(dataset.train$Players, 2)
+
+  dataset.test$Players <- log(dataset.test$Players + 1, base = 2)
+  dataset.test$Players <- round(dataset.test$Players, 2)
+
+  indices.repeated <- c()
+  for (i in 1:nrow(dataset.train)) {
+    pl <- ceiling(dataset.train$Players[i])
+    if(pl > 3) {
+      pl <- pl - 2
+    } else {
+      pl <- 1
+    }
+    indices.repeated <- c(indices.repeated, rep(i,pl))
+  }
+  dataset.train <- dataset.train[indices.repeated,]
+
+
 
   if(remove.nonsig) {
     score <- chi.squared(Players~., dataset.train)
@@ -48,36 +81,29 @@ Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.no
   attrs <- colnames(dataset.train)
   save(attrs, file = "./Prediction/attrs.RData")
 
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "DevPrevGamesCount"):which(colnames(dataset.train) == "PubPrevGamesIneq"))]
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "DevTop"):which(colnames(dataset.train) == "PubTop"))]
-
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "SColorsFull"):which(colnames(dataset.train) == "SColorValAverage"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "SColorsFull"):which(colnames(dataset.test) == "SColorValAverage"))]
-
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "TColorHue1"):which(colnames(dataset.train) == "TColorHue16"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "TColorHue1"):which(colnames(dataset.test) == "TColorHue16"))]
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "SColorHue1"):which(colnames(dataset.train) == "SColorHue16"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "SColorHue1"):which(colnames(dataset.test) == "SColorHue16"))]
-
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "SColorsFull"):which(colnames(dataset.train) == "SColorsReduced"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "SColorsFull"):which(colnames(dataset.test) == "SColorsReduced"))]
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "SColorSatAverage"):which(colnames(dataset.train) == "SColorValAverage"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "SColorSatAverage"):which(colnames(dataset.test) == "SColorValAverage"))]
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "TColorsFull"):which(colnames(dataset.train) == "TColorsReduced"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "TColorsFull"):which(colnames(dataset.test) == "TColorsReduced"))]
-  # dataset.train <- dataset.train[,-c(which(colnames(dataset.train) == "TColorSatAverage"):which(colnames(dataset.train) == "TColorValAverage"))]
-  # dataset.test <- dataset.test[,-c(which(colnames(dataset.test) == "TColorSatAverage"):which(colnames(dataset.test) == "TColorValAverage"))]
+  cat("Final size of train:", nrow(dataset.train), "\n")
+  cat("Size of test:", nrow(dataset.test), "\n")
+  cat("Number of attributes:", ncol(dataset.test)-1, "\n\n")
 
   actual <- dataset.test$Players
 
-  model.label <- "SVM, polynomial kernel"
-  # model <- randomForest(Players ~ ., data = dataset.train, ntree = 200)
-  model <- svm(Players ~ ., data = dataset.train, kernel = "polynomial", coef0 = 0.5, gamma = 0.003)
-  save(model, file = "./Prediction/model.RData")
+  # model.label <- "Linear Regression"
+  # model <- lm(Players ~., data = dataset.train)
+  # model.label <- "Decision Tree"
+  # model <- rpart(Players ~ ., data = dataset.train, method = "anova", control = rpart.control(minsplit = 20 ,cp = 0.005))
+  # model.label <- "Random Forest"
+  # model <- randomForest(Players ~ ., data = dataset.train, ntree = 500)
+  # model.label <- "Gaussian Process"
+  # model <- gausspr(Players ~ ., data = dataset.train)
+  model.label <- "SVM"
+  model <- svm(Players ~ ., data = dataset.train, kernel = "polynomial", coef0 = 0.5, gamma = 0.003, na.action = na.omit)
+
 
   # names <- colnames(dataset.train)
   # formula <- as.formula(paste("Players ~", paste(names[!names %in% "Players"], collapse = " + ")))
-  # model <- neuralnet(formula, data = dataset.train, hidden = c(32), threshold = 0.3)
+  # model <- neuralnet(formula, data = dataset.train, hidden = c(32, 8), threshold = 0.3)
+
+  save(model, file = "./Prediction/model.RData")
 
   dataset.test <- dataset.test[,-c(ncol(dataset.test))]
 
@@ -90,21 +116,35 @@ Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.no
 
   results <- rbind(results, data.frame(actual, predictions))
 
+  print(summary(results$predictions))
+
   cat("Results: \n\n")
 
-  cat("+-1 from actual:", nrow(subset(results, actual <= predictions + 1 & actual >= predictions - 1))/nrow(results))
-  cat(" with baseline:", nrow(subset(results, actual <= 2+min(actual)))/nrow(results), "\n")
+  cat("Intervals by the most examples as baseline: \n")
+  cat("+-1 from actual:", round(nrow(subset(results, actual <= predictions + 1 & actual >= predictions - 1))/nrow(results)*100, 1))
+  cat(" with baseline:", round(nrow(subset(results, actual <= 2+min(actual)))/nrow(results)*100, 1), "\n")
 
-  cat("+-2 from actual:", nrow(subset(results, actual <= predictions + 2 & actual >= predictions - 2))/nrow(results))
-  cat(" with baseline:", nrow(subset(results, actual <= 4+min(actual)))/nrow(results), "\n")
+  cat("+-2 from actual:", round(nrow(subset(results, actual <= predictions + 2 & actual >= predictions - 2))/nrow(results)*100, 1))
+  cat(" with baseline:", round(nrow(subset(results, actual <= 4+min(actual)))/nrow(results)*100, 1), "\n")
 
-  cat("+-3 from actual:", nrow(subset(results, actual <= predictions + 3 & actual >= predictions - 3))/nrow(results))
-  cat(" with baseline:", nrow(subset(results, actual <= 6+min(actual)))/nrow(results), "\n\n")
+  cat("+-3 from actual:", round(nrow(subset(results, actual <= predictions + 3 & actual >= predictions - 3))/nrow(results)*100, 1))
+  cat(" with baseline:", round(nrow(subset(results, actual <= 6+min(actual)))/nrow(results)*100, 1), "\n\n")
 
-  cat("MAE:", mae(results$actual, results$predictions), "\n")
-  cat("RMSE:", rmse(results$actual, results$predictions), "\n")
-  cat("NRMSE:", rmse(results$actual, results$predictions) / sd(results$actual), "\n")
-  cat("COR:", cor(results$actual, results$predictions, method = "pearson"), "\n")
+  cat("Intervals from median as baseline: \n")
+  cat("+-1 from actual:", round(nrow(subset(results, actual <= predictions + 1 & actual >= predictions - 1))/nrow(results)*100, 1))
+  cat(" with baseline:", round(nrow(subset(results, abs(actual-median(actual)) <= 1))/nrow(results)*100, 1), "\n")
+
+  cat("+-2 from actual:", round(nrow(subset(results, actual <= predictions + 2 & actual >= predictions - 2))/nrow(results)*100, 1))
+  cat(" with baseline:", round(nrow(subset(results, abs(actual-median(actual)) <= 2))/nrow(results)*100, 1), "\n")
+
+  cat("+-3 from actual:", round(nrow(subset(results, actual <= predictions + 3 & actual >= predictions - 3))/nrow(results)*100, 1))
+  cat(" with baseline:", round(nrow(subset(results, abs(actual-median(actual)) <= 3))/nrow(results)*100, 1), "\n\n")
+
+  cat("MAE:", round(mae(results$actual, results$predictions), 2), "\n")
+  cat("RMSE:", round(rmse(results$actual, results$predictions), 2), "\n")
+  cat("RRSE:", round(sqrt(sum((results$actual - results$predictions)**2)/sum((results$actual - mean(results$actual))**2))*100, 2), "\n")
+  # cat("NRMSE:", rmse(results$actual, results$predictions) / sd(results$actual), "\n")
+  cat("COR:", round(cor(results$actual, results$predictions, method = "pearson"), 2), "\n")
 
   results.ordered <- results[order(results$actual),]
   table.actual <- table(results$actual)
@@ -115,7 +155,7 @@ Evaluation.Reg <- function(validation = FALSE, seed = 1, top.attr = 0, remove.no
   par(mar=c(5, 5, 4, 2) + 0.1)
 
   plot(results$predictions, results$actual, xlim = c(0,16), ylim = c(0,16), col = "red", las = 1
-       , main = paste0("Regression (", model.label, ")", "\n", if(validation) "validation" else "test", " set")
+       , main = model.label
        , xlab = "predicted", ylab = "actual", cex.lab=1.5, cex.main=1.7, cex.axis=1.5)
   abline(0,1)
   abline(2,1, col = "gray")

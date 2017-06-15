@@ -1,7 +1,7 @@
 # GamesPred
 
 ## Overview
-GamesPred was developed to predict how a game released on Steam will be successful. This includes games not yet announced. The average number of concurrent players in 2 months after the release is used to measure a game's success. This has been calculated from steamcharts.com for roughly 4,600 games which are used to make predictions about new games. Free-to-play and Early Access titles were left out of the study and it is therefore recommended not to use this tool on them. In addition, only games from a developer/publisher with at least 2 games in the database can be reliably predicted. The application notifies you immediately if this condition is not satisfied.
+GamesPred was developed to predict how a game released on Steam will be successful. This includes games not yet announced. The average number of concurrent players in 2 months after the release is used to measure a game's success. This has been calculated from steamcharts.com for roughly 4,200 games which are used to make predictions about new games. Free-to-play and Early Access titles were left out of the study and it is therefore recommended not to use this tool on them. In addition, only games from a developer/publisher with at least 2 games in the database can be reliably predicted. The application notifies you immediately if this condition is not satisfied.
 
 ## Installation
 The project was tested on Windows 10 and Xubuntu 16.04.
@@ -99,18 +99,16 @@ The following information was downloaded for each game on Steam (almost 10,000 g
 * Languages  
 * Genres  
 * Thumbnail  
-* Screenshots  
-* Number of Screenshots  
-* Number of Trailers  
+* Screenshots
 * User Tags  
 * DRM Notice  
 * Concurrent Players (steamcharts.com)  
 
-Each game has its own folder with data and images. These are further processed into a single data table with new and adjusted attributes (e.g. each game has a record about its developer's/publisher's previous games, and languages are separated into multiple attributes). Only applicable records (not free-to-play, not Early Access, no crucial value missing) are allowed for further processing (about 4,600 games). The dataset is then split into training, validation, and test set, and further processing is performed on these splits (such as transforming descriptions into a document-term matrix).
+Each game has its own folder with data and images. These are further processed into a single data table with new and adjusted attributes (e.g. each game has a record about its developer's/publisher's previous games, and languages are separated into multiple attributes). Only applicable records (not free-to-play, not Early Access, no crucial value missing) are allowed for further processing (about 4,200 games). The dataset is then split into training, validation, and test set, and further processing is performed on these splits (such as transforming descriptions into a document-term matrix).
 
 Some statistics about the data can be found at: https://is.muni.cz/www/trnenym/GamesPred/statistics.pdf
 
 The best results were achieved using SVM on continuous class attribute:
 
-Correlation coefficient: 0.83  
-Normalized Root Mean Squared Error: 57 %
+Correlation coefficient: 0.82  
+Normalized Root Mean Squared Error: 58 %

@@ -18,7 +18,7 @@ Init <- function(evaluation = FALSE) {
 
   if(evaluation) {
     packages.eval <- c("jsonlite", "curl", "bitops", "RCurl", "XML", "lubridate", "stats", "FSelector", "RWeka"
-                       , "ggplot2", "caret", "neuralnet", "rpart", "tree", "Metrics")
+                       , "ggplot2", "caret", "neuralnet", "rpart", "tree", "Metrics", "kernlab", "nnet")
 
     invisible(lapply(packages.eval, load.package))
   }
